@@ -3,7 +3,7 @@ from threading import Thread
 
 app = Flask(__name__)
 
-@app.roue("/keep_alive")
+@app.route("/keep_alive")
 def keep_alive():
     return "thank you!"
 
