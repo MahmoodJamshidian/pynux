@@ -152,7 +152,7 @@ class setup_view(nextcord.ui.View):
                         await self.msg.edit(view=self)
                     else:
                         # update database
-                        t_guilds.update_one({'id': str(self.guild.id)}, {'terminal_id': channel.id, 'username': username, 'password': password})
+                        t_guilds.update_one({'id': str(self.guild.id)}, {'$set': {'terminal_id': channel.id, 'username': username, 'password': password}})
                         # delete extera messages
                         await self.msg.delete()
                         await self.after_msg.delete()
