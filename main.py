@@ -64,7 +64,10 @@ async def on_guild_remove(guild: nextcord.Guild):
     handling when it kick from the server
     """
     # remove server data from database
-    t_guilds.delete_one({'id': str(guild.id)})
+    try:
+        t_guilds.delete_one({'id': str(guild.id)})
+    except:
+        pass
 
 class setup_view(nextcord.ui.View):
     """
