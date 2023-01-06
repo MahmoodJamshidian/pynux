@@ -56,7 +56,7 @@ async def on_guild_join(guild: nextcord.Guild):
 
     # send setup message to inviter
     view = setup_view(guild, inviter)
-    view.msg = inviter.send(f"To run pynux on '{guild.name}' server, click the setup button", view=view)
+    view.msg = await inviter.send(f"To run pynux on '{guild.name}' server, click the setup button", view=view)
 
 @bot.event
 async def on_guild_remove(guild: nextcord.Guild):
