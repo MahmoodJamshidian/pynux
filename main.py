@@ -134,7 +134,7 @@ class setup_view(nextcord.ui.View):
                 await self.after_msg.edit("server was created! writing data ...")
                 try:
                     # try to edit server file
-                    paw.edit_file(f"/home/{username}/server/main.py", open("host-data/main.py", "rb").read())
+                    paw.edit_file(f"/home/{username}/server/main.py", open("static/scripts/server/main.py", "rb").read())
                 except: # error on edit server file
                     # send error message
                     await self.after_msg.edit("Error: cant' write server file!", delete_after=ERROR_MSG_DELAY)
