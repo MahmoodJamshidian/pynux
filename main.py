@@ -209,5 +209,8 @@ class setup_dialog(nextcord.ui.Modal):
 
 
 if __name__ == "__main__":
-    server.run_as_thread()
-    bot.run(os.environ['DISCORD_TOKEN'])
+    server.run_as_thread() # run keep alive server as a thread
+    try: # try to run application
+        bot.run(os.environ['DISCORD_TOKEN'])
+    except nextcord.errors.HTTPException: # handle HTTPException (429 too many requests)
+        os.system("kill 1") # switch to new container
