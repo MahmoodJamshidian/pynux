@@ -1,9 +1,6 @@
 Pynux
 =====
 
-Description
------------
-
 pynux is a discord bot for connecting pythonanywhere console and use [Bash](https://en.wikipedia.org/wiki/Bash_(Unix_shell)) on discord.
 
 You may have seen bots similar to this one on the Telegram platform. I also decided to make an example similar to them but for the Discord platform.
