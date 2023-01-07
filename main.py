@@ -69,6 +69,11 @@ async def on_guild_remove(guild: nextcord.Guild):
     except:
         pass
 
+@bot.event
+async def on_message(message: nextcord.Message):
+    if message.channel.id != message.author.dm_channel.id: # not dm message
+        pass
+
 class setup_view(nextcord.ui.View):
     """
     setup message for on_guild_join
