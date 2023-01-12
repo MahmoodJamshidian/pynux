@@ -23,6 +23,7 @@ cdef class Process:
         # save on_write varable for sending output changes
         self.on_write = on_write
         self.cmd = cmd
+        self.proc = None
 
     def run(self):
         """
@@ -92,8 +93,75 @@ cdef class Process:
         """
         write data to STDIN of process
         """
+        if self.proc == None:
+            raise Exception("process not started")
+        if self.proc.poll() != None:
+            raise Exception("process closed")
         self.proc.stdin.write(data)
         self.proc.stdin.flush()
+
+    def terminate(self):
+        """
+        send -15 signal to process (terminate that)
+        """
+        if self.proc == None:
+            raise Exception("process not started")
+        if self.proc.poll() != None:
+            raise Exception("process closed")
+        self.proc.terminate()
+
+    def kill(self):
+        """
+        send -9 signal to process (kill that)
+        """
+        if self.proc == None:
+            raise Exception("process not started")
+        if self.proc.poll() != None:
+            raise Exception("process closed")
+        self.proc.kill()
+    
+    def wait(self):
+        """
+        wait to close process
+        """
+        if self.proc == None:
+            raise Exception("process not started")
+        if self.proc.poll() != None:
+            raise Exception("process closed")
+        self.proc.wait()
+        
+    def send_signal(self, int sig):
+        """
+        send any signal to process
+        """
+        if self.proc == None:
+            raise Exception("process not started")
+        if self.proc.poll() != None:
+            raise Exception("process closed")
+        self.proc.send_signal(sig)
+        
+    @property
+    def pid(self):
+        """
+        pid of process (process id)
+        """
+        if self.proc == None:
+            raise Exception("process not started")
+        if self.proc.poll() != None:
+            raise Exception("process closed")
+        return self.proc.pid
+    
+    @property
+    def returncode(self):
+        """
+        process return code (exit code)
+        """
+        if self.proc == None:
+            raise Exception("process not started")
+        if self.proc.poll() == None:
+            raise Exception("process is running")
+        return self.exitcode
+
 
 class PyProc(Process):
     pass
