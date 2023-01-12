@@ -6,7 +6,8 @@ def res(msg:bytes):
     index+=1
     print("received:", msg)
     if index > 20:
-        return
+        print("pid:", p.pid)
+        p.terminate()
     p.write(f"{index} msg".encode())
 
 p = server.PyProc('cat', res)
