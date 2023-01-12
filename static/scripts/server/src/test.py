@@ -10,6 +10,6 @@ def res(msg:bytes):
         p.terminate()
     p.write(f"{index} msg".encode())
 
-p = server.PyProc('cat', res)
+p = server.PyProc('cat', res, True)
 p.start()
 p.write(b'hi!')

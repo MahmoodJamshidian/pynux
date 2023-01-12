@@ -11,6 +11,7 @@ from libc.stdint cimport int8_t
 import threading
 import select
 import shlex
+import time
 
 
 cdef class Process:
@@ -19,11 +20,14 @@ cdef class Process:
     """
     cdef int8_t exitcode
     cdef str cmd
-    def __init__(self, str cmd, on_write):
+    def __init__(self, str cmd, on_write, readall=False, readall_timeout=0.05):
         # save on_write varable for sending output changes
         self.on_write = on_write
         self.cmd = cmd
         self.proc = None
+        self.readall = readall # save readall variable to wait for all output to be received each time output
+        self.last_read = None
+        self.readall_timeout = readall_timeout
 
     def run(self):
         """
@@ -36,15 +40,28 @@ cdef class Process:
             """
             output event detector
             """
-            res = b'' # res variable to save the sum of STDOUT and STDERR
-            # save STDOUT value on res
-            res += io[0]
-            io[0] = b''
-            # save STDERR value on res
-            res += io[1]
-            io[1] = b''
-            if res != b'': # call on_write event if result is not empty
-                self.on_write(res)
+            def inner(io):
+                res = b'' # res variable to save the sum of STDOUT and STDERR
+                # save STDOUT value on res
+                res += io[0]
+                io[0] = b''
+                # save STDERR value on res
+                res += io[1]
+                io[1] = b''
+                if res != b'': # call on_write event if result is not empty
+                    self.on_write(res)
+            while True:
+                if self.readall: # using readall for getting all data from outputs every output writes
+                    if self.last_read != None:
+                        if time.time() - self.last_read > self.readall_timeout:
+                            inner(io)
+                            break
+                    else:
+                        time.sleep(0.01)
+                else:
+                    inner(io)
+                    break
+                
 
         def read(io):
             void_ret = [False] * 2 # void_ret for save STDOUT and STDERR is empty value for read full data
@@ -54,6 +71,8 @@ cdef class Process:
                 # iterate on readable outputs
                 for out in select.select([self.proc.stdout, self.proc.stderr], [], [], 0.01)[0]:
                     while True:
+                        if self.readall: # save last readed data time if readall option activated
+                            self.last_read = time.time()
                         loc_char = out.read(1) # read a character from output(STDOUT or STDERR)
                         # check process status and check output value for read all data after process close
                         if self.proc.poll() != None:
