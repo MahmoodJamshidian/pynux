@@ -20,7 +20,7 @@ cdef class Process:
     """
     cdef int8_t exitcode
     cdef str cmd
-    def __init__(self, str cmd, on_write, readall=False, readall_timeout=0.05):
+    def __init__(self, str cmd, on_write, readall=False, readall_timeout=0.05, shell=False):
         # save on_write varable for sending output changes
         self.on_write = on_write
         self.cmd = cmd
@@ -28,6 +28,7 @@ cdef class Process:
         self.readall = readall # save readall variable to wait for all output to be received each time output
         self.last_read = None
         self.readall_timeout = readall_timeout
+        self.shell = shell
 
     def run(self):
         """
@@ -105,7 +106,7 @@ cdef class Process:
         """
         start process and output checker
         """
-        self.proc = Popen(shlex.split(self.cmd), stdin=PIPE, stdout=PIPE, stderr=PIPE) # open process
+        self.proc = Popen(shlex.split(self.cmd), stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=self.shell) # open process
         threading.Thread(target=self.run).start() # run output checker system
 
     def write(self, data):
