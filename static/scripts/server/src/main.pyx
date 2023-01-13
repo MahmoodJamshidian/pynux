@@ -4,15 +4,24 @@ Server & Process handler
 Pynux branchs
 """
 
-from flask import Flask
+from flask import Flask, request, abort, jsonify, url_for
 from subprocess import Popen, PIPE
 from libcpp.string cimport string
 from libc.stdint cimport int8_t
 import threading
+import hashlib
+import dotenv
 import select
 import shlex
+import uuid
 import time
+import os
 
+__version__ = "1.0a"
+
+dotenv.load_dotenv()
+
+ACCESS_TOKEN = os.environ['ACCESS_TOKEN']
 
 cdef class Process:
     """
@@ -186,9 +195,69 @@ cdef class Process:
 class PyProc(Process):
     pass
 
+ignore_routes = ["/", "/keep_alive", '/info', '/status']
+all_routes = []
 
 app = Flask(__name__)
 
 @app.route("/")
 def index():
     return "hello world!"
+
+proc = None
+ignore_authorization = False
+
+@app.before_first_request
+def first_request():
+    global ignore_authorization
+    if ACCESS_TOKEN == '':
+        ignore_authorization = True
+
+@app.before_request
+def before_request_handler():
+    global all_routes, ignore_authorization
+    if all_routes == []:
+        all_routes = [url_for(rule.endpoint, **(rule.defaults or {})) for rule in app.url_map.iter_rules() if rule.endpoint not in ('static', 'templates',)]
+    if str(request.url_rule) in all_routes:
+        if str(request.url_rule) not in ignore_routes:
+            if not ignore_authorization:
+                if request.headers.get('Authorization', '') != f"Basic {ACCESS_TOKEN}":
+                    return abort(401)
+            else:
+                ignore_authorization = False
+        else:
+            return
+    else:
+        abort(404)
+
+@app.route("/reset-token", methods=['POST'])
+def reset_token():
+    global ACCESS_TOKEN
+    token = uuid.uuid4().hex.upper()
+    data = ""
+    with open(".env", 'r') as fr:
+        data = fr.read()
+    data = data[:data.index("ACCESS_TOKEN=")]+"ACCESS_TOKEN="+token+data[data.index("ACCESS_TOKEN=")+len(data[data.index("ACCESS_TOKEN="):].splitlines()[0]):]
+    with open(".env", 'w') as fw:
+        fw.write(data)
+    dotenv.load_dotenv()
+    ACCESS_TOKEN = token
+    return jsonify({"ACCESS_TOKEN": ACCESS_TOKEN})
+
+@app.route("/run", methods=['POST'])
+def run_command():
+    global proc
+    pass
+
+@app.route("/status", methods=['POST'])
+def status():
+    return jsonify({'SHA256-checksum': hashlib.sha256(open(__file__, 'rb').read()).hexdigest(), 'auth': not ACCESS_TOKEN==''})
+
+@app.route("/info", methods=['POST'])
+def server_checksum():
+    return jsonify({'VER': __version__})
+
+@app.route("/keep_alive")
+def keep_alive():
+    time.sleep(5*60)
+    return "ok"
